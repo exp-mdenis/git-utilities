@@ -1,0 +1,27 @@
+#!/bin/bash
+set -eu
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+before_file=.before1432.tmp
+after_file=.after1432.tmp
+
+ls >"$before_file"
+git clone $@
+ls >"$after_file"
+
+new_dir="$(diff "$before_file" "$after_file" | tail -n +2 | cut -c 3-)"
+
+# Clean up temporary files
+rm -f $before_file $after_file
+
+if [[ -d "$new_dir" ]]; then
+	echo "Preparing new repository : $new_dir"
+	echo 'Installing pre-push hook...'
+	cp -- "$DIR/pre-push" "$new_dir"/.git/hooks/pre-push
+else
+	echo "Git repository could not be cloned!"
+	echo -1
+fi
+
+echo "Successfully cloned!"

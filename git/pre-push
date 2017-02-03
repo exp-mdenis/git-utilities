@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# @link https://gist.github.com/mattscilipoti/8424018
+#
+# Called by "git push" after it has checked the remote status,
+# but before anything has been pushed.
+#
+# If this script exits with a non-zero status nothing will be pushed.
+#
+# Steps to install, from the root directory of your repo...
+# 1. Copy the file into your repo at `.git/hooks/pre-push`
+# 2. Set executable permissions, run `chmod +x .git/hooks/pre-push`
+# 3. Or, use `rake hooks:pre_push` to install
+#
+# Try a push to master, you should get a message `*** [Policy] Never push code directly to...`
+#
+
+protected_branches=( master develop )
+for i in "${protected_branches[@]}"
+do
+    protected_branch=$i
+
+    policy='[Policy] Never push, force push or delete the '$protected_branch' branch! (Prevented with pre-push hook.)'
+
+    current_branch=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
+
+    do_exit(){
+      echo $policy
+      exit 1
+    }
+
+    # This check makes sure that you dont make a *git push* while on protected branch
+    # This check is very strict so you might want to consider removing it if it does not fit your purpose
+    if [[ $protected_branch == $current_branch ]]; then
+      do_exit
+    fi
+
+done
+
+unset do_exit
+
+exit 0
